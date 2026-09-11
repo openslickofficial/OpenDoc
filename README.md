@@ -73,8 +73,8 @@ flowchart TD
 ### 2. Environment Setup
 ```powershell
 # Clone the repository
-git clone https://github.com/subham-qualcomm/snapdragon-doc-assistant.git
-cd snapdragon-doc-assistant
+git clone https://github.com/openslickofficial/OpenDoc.git
+cd OpenDoc
 
 # Create a clean Python 3.11 virtual environment
 python -m venv .venv

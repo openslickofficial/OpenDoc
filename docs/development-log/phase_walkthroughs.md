@@ -957,31 +957,31 @@ The desktop application wraps the unified 4-stage pipeline in an accessible, nat
 The following high-resolution screenshots demonstrate each operational state of the desktop application:
 
 ### Initial Document Ingestion & Ready State
-![Initial Document Ingestion State](C:/Users/subha/.gemini/antigravity-ide/brain/2f37b348-0452-48f0-b346-90c533339e94/gui_01_initial_ingest.png)
+![Initial Document Ingestion State](docs/screenshots/gui_01_initial_ingest.png)
 *Figure 6.1: Initial application state showing drag-and-drop ingestion area, document thumbnail card (form_document.png), target language selector, strict gate checkbox, pending stage panel, and ready audio player.*
 
 ---
 
 ### Clean Document Pass State (100% Fidelity Verified)
-![Clean Pass State](C:/Users/subha/.gemini/antigravity-ide/brain/2f37b348-0452-48f0-b346-90c533339e94/gui_02_clean_pass.png)
+![Clean Pass State](docs/screenshots/gui_02_clean_pass.png)
 *Figure 6.2: Clean pass state with green Fidelity Verified banner, high-contrast Devanagari Hindi text ("आवेदन आईडी: SN-2026-X89..."), all 4 stage badges completed with latencies/providers, and clean audio playback.*
 
 ---
 
 ### Fidelity Safeguard Interception & Warning State
-![Fidelity Safeguard Interception State](C:/Users/subha/.gemini/antigravity-ide/brain/2f37b348-0452-48f0-b346-90c533339e94/gui_03_fidelity_warning.png)
+![Fidelity Safeguard Interception State](docs/screenshots/gui_03_fidelity_warning.png)
 *Figure 6.3: Fidelity warning state showing prominent amber alert with bulleted discrepancy warnings ($89.50 vs 889.50 and 2026 vs 2028), warning badge in audio player, and prepended auditory warning playback.*
 
 ---
 
 ### Blank Image Short-Circuit Error State
-![Blank Image Short-Circuit State](C:/Users/subha/.gemini/antigravity-ide/brain/2f37b348-0452-48f0-b346-90c533339e94/gui_04_error_short_circuit.png)
+![Blank Image Short-Circuit State](docs/screenshots/gui_04_error_short_circuit.png)
 *Figure 6.4: Fail-fast error state showing crimson error banner halting execution in 11ms on blank scan, Stage 1 marked Failed, Stages 2–4 marked Skipped, and audio player disabled.*
 
 ---
 
 ### Strict Fidelity Gate Audio Suppression State
-![Strict Fidelity Gate Audio Suppression State](C:/Users/subha/.gemini/antigravity-ide/brain/2f37b348-0452-48f0-b346-90c533339e94/gui_05_strict_audio_blocked.png)
+![Strict Fidelity Gate Audio Suppression State](docs/screenshots/gui_05_strict_audio_blocked.png)
 *Figure 6.5: Strict safety gate state showing Audio Generation Blocked banner, strict audio suppression badge, and disabled audio player protecting non-literate users from unverified information.*
 
 ---

@@ -36,8 +36,8 @@ If you received this project as a ZIP archive:
 
 If using Git:
 ```powershell
-git clone https://github.com/subham-qualcomm/snapdragon-doc-assistant.git
-cd snapdragon-doc-assistant
+git clone https://github.com/openslickofficial/OpenDoc.git
+cd OpenDoc
 ```
 
 ---
