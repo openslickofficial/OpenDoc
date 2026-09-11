@@ -1,0 +1,33 @@
+# Snapdragon X NPU Document Assistant - Requirements
+# Python 3.11 environment
+
+# Qualcomm AI Hub & Models
+qai-hub>=0.18.0
+qai-hub-models>=0.18.0
+
+# ONNX Runtime Inference Engines
+# Note: On Snapdragon X (Windows ARM64), onnxruntime-qnn enables Hexagon NPU via QNNExecutionProvider.
+# On x64 development machines, standard onnxruntime provides CPU fallback & model quantization utilities.
+onnxruntime-qnn; platform_machine == "ARM64"
+onnxruntime>=1.19.0; platform_machine != "ARM64"
+
+# Computer Vision & Document Preprocessing
+opencv-python>=4.8.0
+pillow>=10.0.0
+
+# Numerical Computing (pinned to 1.26.4 / <2.0.0 for QNN EP C-ABI and native wheel compatibility)
+numpy>=1.26.4,<2.0.0
+
+
+# Transformer Tokenizer & Model Utilities (for TrOCR vision-encoder-decoder processing)
+transformers>=4.38.0
+torch>=2.2.0
+sentencepiece>=0.2.0
+tiktoken>=0.7.0
+
+# Desktop GUI & Accessibility
+PySide6>=6.6.0
+
+# Packaging & Distribution (optional / build dependency)
+pyinstaller>=6.5.0
+

@@ -1,0 +1,68 @@
+# ==============================================================================
+# Snapdragon Document Assistant - Git Ignore Configuration
+# ==============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Python Virtual Environments
+.venv/
+.venv*/
+venv/
+env/
+ENV/
+
+# Packaging & PyInstaller Distribution Builds
+build/
+dist/
+*.spec
+*.egg-info/
+.eggs/
+
+# Large Model Weights, Compiled Partitions & Binaries
+# (Obtained via Qualcomm AI Hub jobs or local export; excluded from git history)
+models/trocr-qnn-compiled/
+models/trocr-onnx-float/
+models/genie_bundle_qwen17/
+models/genie_bundle_phi35/
+models/*_package/
+models/**/*.data
+*.data
+models/piper_hi/*.onnx
+models/qwen_local_proxy/*.safetensors
+models/**/*.bin
+models/**/*.onnx
+models/**/*.raw
+models/**/*.zip
+models/**/*.tar.gz
+
+# Generated Audio Synthesis Outputs
+audio_output/*
+!audio_output/.gitkeep
+
+# Temporary Logs, Test Outputs & Scratch Directory
+scratch/
+*.log
+*.tmp
+*.bak
+.temp/
+
+# Environment Variables, Secrets & API Tokens
+.env
+.env.*
+*.pem
+*.key
+
+# Operating System & IDE Files
+.vscode/
+.idea/
+.vs/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+desktop.ini
