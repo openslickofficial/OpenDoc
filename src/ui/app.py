@@ -24,8 +24,24 @@ def run_app():
     parser.add_argument("--save-screenshot", type=str, default=None, help="Save GUI screenshot to file on finish")
     parser.add_argument("--dump-json", type=str, default=None, help="Dump pipeline result JSON to file on finish")
     parser.add_argument("--exit-on-finish", action="store_true", help="Exit application when pipeline completes")
+    parser.add_argument("--clear-cache", action="store_true", help="Purge all generated audio files from disk and exit")
 
     args, unknown = parser.parse_known_args()
+
+    if args.clear_cache:
+        from src.config import DEFAULT_AUDIO_DIR
+        cnt = 0
+        if os.path.exists(DEFAULT_AUDIO_DIR):
+            for fname in os.listdir(DEFAULT_AUDIO_DIR):
+                if fname.lower().endswith((".wav", ".mp3")):
+                    try:
+                        os.remove(os.path.join(DEFAULT_AUDIO_DIR, fname))
+                        cnt += 1
+                    except Exception:
+                        pass
+        print(f"[PRIVACY-PURGE] Successfully deleted {cnt} cached audio artifact(s) from {DEFAULT_AUDIO_DIR}.")
+        if not args.image and not args.auto_process:
+            return 0
 
     # Ensure application exists
     app = QApplication.instance()

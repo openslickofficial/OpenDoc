@@ -364,16 +364,21 @@ def _synthesize_piper_wav(text: str, output_path: str) -> Tuple[str, str, float]
 def _synthesize_sapi_fallback(text: str, output_path: str) -> Tuple[str, str, float]:
     """Offline system fallback via Windows SAPI5 synthesizer."""
     import subprocess
-    logger.info("Synthesizing via Windows SAPI5 offline fallback...")
-    ps_cmd = f"""
-    Add-Type -AssemblyName System.Speech
-    $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
-    $s.SetOutputToWaveFile('{output_path}')
-    $s.Speak('{text.replace("'", " ")}')
-    $s.Dispose()
-    """
+    ps_script = (
+        "[Console]::InputEncoding = [System.Text.Encoding]::UTF8; "
+        "Add-Type -AssemblyName System.Speech; "
+        "$text = [Console]::In.ReadToEnd(); "
+        "$s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+        "$s.SetOutputToWaveFile($args[0]); "
+        "$s.Speak($text); "
+        "$s.Dispose()"
+    )
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True)
+    subprocess.run(
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script, output_path],
+        input=text.encode("utf-8"),
+        capture_output=True,
+    )
     
     duration_ms = 0.0
     if os.path.exists(output_path):

@@ -293,9 +293,13 @@ class GenieTranslationEngine(BaseTranslationEngine):
             )
             translated = result.stdout.strip()
             return translated, "GenieTranslationEngine (Qwen3-1.7B w4a16 on Qualcomm Hexagon NPU)"
+        except subprocess.CalledProcessError as e:
+            err_msg = f"Genie translation process exited with return code {e.returncode}"
+            logger.warning("Genie on-device execution unavailable: %s. Falling back to local engine.", err_msg)
+            raise RuntimeError(err_msg) from None
         except Exception as e:
-            logger.warning("Genie on-device execution unavailable: %s. Falling back to local engine.", e)
-            raise
+            logger.warning("Genie on-device execution unavailable (%s). Falling back to local engine.", type(e).__name__)
+            raise RuntimeError(f"Genie execution failed: {type(e).__name__}") from None
 
 
 class LocalTranslationEngine(BaseTranslationEngine):

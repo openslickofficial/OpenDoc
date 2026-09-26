@@ -74,6 +74,9 @@ class DropArea(QFrame):
             self.on_file_selected(file_path)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
+        if not self.isEnabled():
+            event.ignore()
+            return
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
             self.setStyleSheet(f"""
@@ -89,6 +92,9 @@ class DropArea(QFrame):
 
     def dropEvent(self, event: QDropEvent):
         self.setStyleSheet("")
+        if not self.isEnabled():
+            event.ignore()
+            return
         urls = event.mimeData().urls()
         if urls:
             file_path = urls[0].toLocalFile()
@@ -114,6 +120,7 @@ class MainWindow(QMainWindow):
         self.worker_thread: Optional[QThread] = None
         self.worker: Optional[PipelineWorker] = None
         self.last_pipeline_result: Optional[Dict[str, Any]] = None
+        self.is_processing: bool = False
 
         self._setup_ui()
 
@@ -172,6 +179,20 @@ class MainWindow(QMainWindow):
         self.strict_gate_check.setChecked(False)
         gate_box.addWidget(self.strict_gate_check)
         top_bar.addLayout(gate_box)
+
+        # Privacy & Cache Clearance Action
+        privacy_box = QVBoxLayout()
+        privacy_box.setSpacing(2)
+        privacy_label = QLabel("Privacy & Data Retention")
+        privacy_label.setStyleSheet(f"font-size: 11px; font-weight: bold; color: {TEXT_MUTED};")
+        privacy_box.addWidget(privacy_label)
+
+        self.clear_cache_btn = QPushButton("🧹 Clear Session & Cache")
+        self.clear_cache_btn.setObjectName("secondaryButton")
+        self.clear_cache_btn.setToolTip("Immediately purge all document text from memory and delete generated audio files from disk.")
+        self.clear_cache_btn.clicked.connect(self.clear_session_and_cache)
+        privacy_box.addWidget(self.clear_cache_btn)
+        top_bar.addLayout(privacy_box)
 
         main_layout.addLayout(top_bar)
 
@@ -348,6 +369,10 @@ class MainWindow(QMainWindow):
 
     def on_image_selected(self, image_path: str):
         """Called when a document image is loaded via drop or browse."""
+        # Concurrency guard: Do not accept new documents while pipeline is running
+        if self.is_processing or (self.worker_thread and self.worker_thread.isRunning()):
+            return
+
         if not os.path.isfile(image_path):
             return
 
@@ -380,12 +405,19 @@ class MainWindow(QMainWindow):
 
     def start_pipeline(self):
         """Launches the background worker thread to process the document."""
+        # Concurrency & Re-entrancy guard
+        if self.is_processing or (self.worker_thread and self.worker_thread.isRunning()):
+            return
+
         if not self.selected_image_path or not os.path.isfile(self.selected_image_path):
             return
 
         # Prepare UI for execution
+        self.is_processing = True
         self.process_btn.setEnabled(False)
         self.process_btn.setText("⏳ Processing Document on Device...")
+        self.drop_area.setEnabled(False)
+        self.clear_cache_btn.setEnabled(False)
         self.banner_widget.reset()
         self.stage_widget.reset()
         self.audio_player.set_disabled_state("Processing document...")
@@ -518,13 +550,19 @@ class MainWindow(QMainWindow):
         else:
             self.banner_widget.show_clean_pass(tot_latency)
 
+        self.is_processing = False
+        self.drop_area.setEnabled(True)
+        self.clear_cache_btn.setEnabled(True)
         self.pipeline_completed.emit(result)
 
     @Slot(str)
     def _on_pipeline_failed(self, error_msg: str):
         """Slot receiving fatal worker exceptions."""
+        self.is_processing = False
         self.process_btn.setEnabled(True)
         self.process_btn.setText("⚡ Process Document")
+        self.drop_area.setEnabled(True)
+        self.clear_cache_btn.setEnabled(True)
         self.banner_widget.show_error(f"Fatal background worker error: {error_msg}")
         self.stage_widget.set_stage_failed("ocr", error_msg)
         self.pipeline_error.emit(error_msg)
@@ -586,3 +624,49 @@ class MainWindow(QMainWindow):
         if text.strip():
             clipboard = QApplication.clipboard()
             clipboard.setText(text)
+
+    def clear_session_and_cache(self):
+        """
+        Wipes active document session data from RAM and deletes derived audio
+        artifacts from audio_output/ on disk to protect sensitive user privacy.
+        """
+        if self.is_processing:
+            return
+
+        # 1. Stop audio playback and reset player
+        self.audio_player.stop_playback()
+        self.audio_player.set_disabled_state("Session wiped. Cache cleared.")
+
+        # 2. Clear volatile memory text buffers and UI tables
+        self.ocr_text.clear()
+        self.simp_text.clear()
+        self.trans_text.clear()
+        self.audit_table.setRowCount(0)
+        self.banner_widget.reset()
+        self.stage_widget.reset()
+
+        # 3. Reset document ingestion states
+        self.selected_image_path = None
+        self.last_pipeline_result = None
+        self.preview_label.setPixmap(QPixmap())
+        self.preview_label.setText("No document loaded")
+        self.process_btn.setEnabled(False)
+        self.process_btn.setText("⚡ Process Document")
+
+        # 4. Purge generated audio files from audio_output directory
+        from src.config import DEFAULT_AUDIO_DIR
+        deleted_count = 0
+        if os.path.exists(DEFAULT_AUDIO_DIR):
+            for fname in os.listdir(DEFAULT_AUDIO_DIR):
+                if fname.lower().endswith((".wav", ".mp3")):
+                    fpath = os.path.join(DEFAULT_AUDIO_DIR, fname)
+                    try:
+                        os.remove(fpath)
+                        deleted_count += 1
+                    except Exception:
+                        pass
+
+        self.file_info_label.setText(
+            f"Privacy Wipe Complete: Memory cleared, {deleted_count} audio file(s) removed."
+        )
+        self.file_info_label.setStyleSheet(f"font-size: 11px; color: {TEXT_MUTED};")

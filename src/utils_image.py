@@ -78,7 +78,18 @@ def preprocess_document_image(image_path: str) -> Tuple[np.ndarray, float]:
     """
     img = cv2.imread(image_path)
     if img is None:
-        raise FileNotFoundError(f"Could not load image from '{image_path}'. Ensure the path is valid.")
+        raise FileNotFoundError(f"Could not load image from '{image_path}'. Ensure the file format is a valid, uncorrupted image.")
+
+    h, w = img.shape[:2]
+    total_pixels = h * w
+    MAX_DIM = 8000
+    MAX_PIXELS = 32_000_000  # Safe upper bound (~32 Megapixels) for 600 DPI full-page scans
+
+    if h > MAX_DIM or w > MAX_DIM or total_pixels > MAX_PIXELS:
+        raise ValueError(
+            f"Image dimensions ({w}x{h}, {total_pixels:,} pixels) exceed safe operational bounds "
+            f"(max {MAX_DIM}x{MAX_DIM} / {MAX_PIXELS:,} pixels). Image may trigger memory exhaustion."
+        )
 
     if len(img.shape) == 3 and img.shape[2] == 3:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
