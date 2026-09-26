@@ -33,13 +33,15 @@ def run_app():
         cnt = 0
         if os.path.exists(DEFAULT_AUDIO_DIR):
             for fname in os.listdir(DEFAULT_AUDIO_DIR):
-                if fname.lower().endswith((".wav", ".mp3")):
+                if fname.lower() == ".gitkeep":
+                    continue
+                if fname.lower().endswith((".wav", ".mp3", ".json", ".png")):
                     try:
                         os.remove(os.path.join(DEFAULT_AUDIO_DIR, fname))
                         cnt += 1
                     except Exception:
                         pass
-        print(f"[PRIVACY-PURGE] Successfully deleted {cnt} cached audio artifact(s) from {DEFAULT_AUDIO_DIR}.")
+        print(f"[PRIVACY-PURGE] Successfully deleted {cnt} cached audio/json/screenshot artifact(s) from {DEFAULT_AUDIO_DIR}.")
         if not args.image and not args.auto_process:
             return 0
 
@@ -53,6 +55,10 @@ def run_app():
     app.setStyleSheet(GLOBAL_STYLESHEET)
 
     window = MainWindow()
+    if args.dump_json:
+        window.session_dump_json_path = os.path.abspath(args.dump_json)
+    if args.save_screenshot:
+        window.session_screenshot_path = os.path.abspath(args.save_screenshot)
     window.show()
 
     if args.image:

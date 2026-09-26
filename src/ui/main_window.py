@@ -121,6 +121,8 @@ class MainWindow(QMainWindow):
         self.worker: Optional[PipelineWorker] = None
         self.last_pipeline_result: Optional[Dict[str, Any]] = None
         self.is_processing: bool = False
+        self.session_dump_json_path: Optional[str] = None
+        self.session_screenshot_path: Optional[str] = None
 
         self._setup_ui()
 
@@ -653,12 +655,29 @@ class MainWindow(QMainWindow):
         self.process_btn.setEnabled(False)
         self.process_btn.setText("⚡ Process Document")
 
-        # 4. Purge generated audio files from audio_output directory
-        from src.config import DEFAULT_AUDIO_DIR
+        # 4. Sweep session-specific --dump-json and --save-screenshot files if recorded
         deleted_count = 0
+        if self.session_dump_json_path and os.path.isfile(self.session_dump_json_path):
+            try:
+                os.remove(self.session_dump_json_path)
+                deleted_count += 1
+            except Exception:
+                pass
+
+        if self.session_screenshot_path and os.path.isfile(self.session_screenshot_path):
+            try:
+                os.remove(self.session_screenshot_path)
+                deleted_count += 1
+            except Exception:
+                pass
+
+        # 5. Purge generated audio files, json dumps, and test screenshots from audio_output directory
+        from src.config import DEFAULT_AUDIO_DIR
         if os.path.exists(DEFAULT_AUDIO_DIR):
             for fname in os.listdir(DEFAULT_AUDIO_DIR):
-                if fname.lower().endswith((".wav", ".mp3")):
+                if fname.lower() == ".gitkeep":
+                    continue
+                if fname.lower().endswith((".wav", ".mp3", ".json", ".png")):
                     fpath = os.path.join(DEFAULT_AUDIO_DIR, fname)
                     try:
                         os.remove(fpath)
@@ -667,6 +686,6 @@ class MainWindow(QMainWindow):
                         pass
 
         self.file_info_label.setText(
-            f"Privacy Wipe Complete: Memory cleared, {deleted_count} audio file(s) removed."
+            f"Privacy Wipe Complete: Memory zeroed, {deleted_count} artifact file(s) removed."
         )
         self.file_info_label.setStyleSheet(f"font-size: 11px; color: {TEXT_MUTED};")

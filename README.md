@@ -242,18 +242,26 @@ Because Snapdragon Document Assistant is designed to process highly sensitive pe
 
 ### 1. Data Handling & Local Retention
 - **Input Scans**: Original document images are opened in-memory via OpenCV/Pillow directly from their source path. The application **never copies or duplicates** user images into internal or temporary directories.
-- **Extracted Document Content**: Verbatim OCR text, simplified English, and translated Indic text reside **strictly in volatile process memory (RAM)** during the user's session. They are never written to disk unless the user explicitly invokes the CLI automation with `--dump-json <path>`.
-- **Audio Speech Artifacts (`audio_output/*.wav`)**: Synthesized spoken audio is rendered to `<app_root>/audio_output/speech_<timestamp>.wav` (16kHz 16-bit mono PCM). **By default, these WAV files persist indefinitely on the local filesystem** until deleted.
-- **Privacy Wipe ("Clear Session & Cache")**: To prevent sensitive audio files or text from lingering on a shared workstation:
-  - **In the GUI**: Clicking the **`🧹 Clear Session & Cache`** button in the top navigation bar immediately stops audio playback, zeroes out all text buffers, clears the entity audit table, resets the thumbnail preview, and permanently deletes all generated `.wav` and `.mp3` speech files from `audio_output/`.
-  - **In the CLI**: Running `python -m src.ui.app --clear-cache` purges the audio cache headlessly.
+- **Extracted Document Content**: Verbatim OCR text, simplified English, and translated Indic text reside **strictly in volatile process memory (RAM)** during the user's session. They are never written to disk during normal GUI or pipeline usage.
+- **Optional CLI Artifacts (`--dump-json` & `--save-screenshot`)**: When executing headless automated test runs, users may optionally designate `--dump-json <path>` and `--save-screenshot <path>`. These write plaintext JSON results and UI screenshots to the user-specified destination. The UI's `🧹 Clear Session & Cache` button tracks and deletes these files if generated during the current session, or if placed in `audio_output/`. Any external paths chosen by the user outside the app directory remain user-managed.
+- **Audio Speech Artifacts (`audio_output/*.wav`)**: Synthesized spoken audio is rendered to `<app_root>/audio_output/speech_<timestamp>.wav` (16kHz 16-bit mono PCM). **By default, these WAV files persist on the local filesystem** until deleted.
+- **Privacy Wipe ("Clear Session & Cache")**: To prevent sensitive audio files, JSON dumps, or text from lingering on a shared workstation:
+  - **In the GUI**: Clicking the **`🧹 Clear Session & Cache`** button in the top navigation bar immediately halts audio playback, zeroes out all volatile text buffers, clears the entity audit table, resets the thumbnail preview, and permanently deletes all generated `.wav`, `.mp3`, `.json`, and temporary screenshot `.png` files from `audio_output/`.
+  - **In the CLI**: Running `python -m src.ui.app --clear-cache` purges the audio/screenshot cache headlessly.
+- **OS-Level Caching (Windows Explorer Thumbnails & Search Indexer)**:
+  - When selecting files via the **Browse** dialog (`QFileDialog`), Windows Common File Dialog launches Windows Explorer shell views. If the user browses an image folder in Icon view, the Windows OS generates and caches image thumbnails in `%LOCALAPPDATA%\Microsoft\Windows\Explorer\thumbcache_*.db`.
+  - Similarly, if document scans are placed in indexed user libraries (`Documents`, `Pictures`), Windows Search (`SearchIndexer.exe`) will index file metadata.
+  - This is operating-system-level behavior outside the process control of any local desktop application. For maximum privacy when handling sensitive medical or legal documents, users should store scans in folders excluded from Windows Search, view folders in Details/List view, and periodically purge the Windows thumbnail cache using **Disk Cleanup** (`cleanmgr.exe` -> check **Thumbnails** -> Clean up).
 - **No Persistent Log Files**: Standard pipeline logging writes exclusively to `sys.stderr` / console. No log files are created, bundled, or written to disk during document processing.
 - **No `%TEMP%` Binary Extraction**: The application is distributed using PyInstaller's `--onedir` bundle mode rather than `--onefile`, eliminating runtime archive decompression into `%TEMP%\_MEIxxxxxx`.
 
-### 2. Zero Runtime Network Dependency & Telemetry
+### 2. Zero Runtime Network Dependency & Secret Hygiene
 - **100% Offline Runtime**: The shipped desktop executable and CLI contain **zero network endpoints, zero cloud API calls, and zero telemetry listeners**.
 - **Build-Time vs. Runtime Separation**: Qualcomm AI Hub cloud API calls were utilized strictly during developer compilation and hardware benchmark workflows (Phases 1 and 4). The runtime application has zero imports of `qai_hub` and operates with `local_files_only=True` and `HF_HUB_OFFLINE=1`. True offline execution was physically verified by running the packaged binary with networking disabled.
-- **Token Hygiene**: The developer AI Hub API token is stored on the build workstation in `~/.qai_hub/client.ini` (restricted by Windows NTFS ACLs to `SYSTEM`, `Administrators`, and the current user). Zero traces of this token exist in the repository, commit history, build manifests, or distributable binaries.
+- **Token Hygiene & Rotation**:
+  - The developer Qualcomm AI Hub API token is stored on the build machine in `~/.qai_hub/client.ini` (restricted by Windows NTFS ACLs to `SYSTEM`, `Administrators`, and the current user).
+  - The entire public git history was verified across every commit (`git log -p -S<token>` across all commits from initial commit `e34b7d9` to `HEAD`): **zero commits have ever contained the token**.
+  - **Token Rotation**: Because the developer token was previously referenced during interactive debugging sessions, it should be treated as exposed. Qualcomm AI Hub tokens must be rotated directly on the Qualcomm AI Hub web portal (`https://app.aihub.qualcomm.com/account` -> Regenerate Token), followed by running `qai-hub configure --api_token <NEW_TOKEN>`. The end-user application itself requires no token whatsoever.
 
 ### 3. Input Validation & Fault Robustness
 - **Deliberately Malformed File Handling**:
